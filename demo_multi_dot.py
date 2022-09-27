@@ -5,11 +5,16 @@ from torch.utils.data import DataLoader, Dataset
 import os
 
 from PIL import Image
+import cv2
 from torchvision.transforms import Resize, Compose, ToTensor, Normalize
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 import time
+
+import pdb
 
 def get_mgrid(sidelen, dim=2, img_idx=0):
     '''Generates a flattened grid of (x,y,...) coordinates in a range of -1 to 1.
@@ -157,6 +162,8 @@ class ImageFitting(Dataset):
         self.target = []
         img_idx = 0
         for pic in pics:
+            # img = cv2.imread((path+'/'+pic), cv2.IMREAD_GRAYSCALE)
+            # img = Image.fromarray(img)
             img = Image.open((path+'/'+pic))
             img = get_tensor(sidelength, img)
             self.grid.append(get_mgrid(sidelength, 2, img_idx))
@@ -189,15 +196,16 @@ optim = torch.optim.Adam(lr=1e-4, params=img_siren.parameters())
 
 input, pixel_ground_truth = img_grid.__getitem__(0)
 input, pixel_ground_truth = input.unsqueeze(0).cuda(), pixel_ground_truth.unsqueeze(0).cuda()
-
 for i in range(4):
     model_input, ground_truth = img_grid.__getitem__(i+1)
     model_input, ground_truth = model_input.unsqueeze(0).cuda(), ground_truth.unsqueeze(0).cuda()
     input = torch.cat((input, model_input), 0)
     pixel_ground_truth = torch.cat((pixel_ground_truth, ground_truth), 0)
 
+pdb.set_trace()
 
 for step in range(total_steps):
+
     output, coords = img_siren(input)    
     loss = ((output - pixel_ground_truth)**2).mean()
     
